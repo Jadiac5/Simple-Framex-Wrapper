@@ -180,7 +180,11 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             final Updater.Release r = Updater.checkForUpdate(this, currentVersion());
             Updater.remember(this, r);
+            final String err = Updater.lastError;
             handler.post(() -> {
+                if (err != null && !isDestroyed()) {
+                    android.widget.Toast.makeText(this, "Update check failed: " + err, android.widget.Toast.LENGTH_LONG).show();
+                }
                 if (isDestroyed()) return;
                 if (r != null && !siteStarted && !isFinishing()) {
                     showUpdateScreen(r);

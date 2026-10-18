@@ -58,16 +58,23 @@ final class Updater {
         boolean isCancelled();
     }
 
+    /** Why the last check found nothing because it failed (null when it simply was up to date). */
+    static volatile String lastError;
+
     private Updater() {}
 
     /** Returns the latest release if it is newer than {@code currentVersion}, else null (also on any error). */
     static Release checkForUpdate(Context ctx, String currentVersion) {
         cleanup(ctx);
+        lastError = null;
         HttpURLConnection c = null;
         try {
             c = open(API_URL);
             c.setRequestProperty("Accept", "application/vnd.github+json");
-            if (c.getResponseCode() != 200) return null;
+            if (c.getResponseCode() != 200) {
+                lastError = "HTTP " + c.getResponseCode();
+                return null;
+            }
             JSONObject json = new JSONObject(readAll(c.getInputStream()));
             if (json.optBoolean("draft") || json.optBoolean("prerelease")) return null;
             String tag = json.optString("tag_name");
@@ -83,6 +90,7 @@ final class Updater {
             }
         } catch (IOException | JSONException | RuntimeException e) {
             // Offline, rate limited, malformed... the app simply carries on to the site.
+            lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
         } finally {
             if (c != null) c.disconnect();
         }
