@@ -41,3 +41,5 @@ official releases (same signing key); builds you compile yourself use your debug
 
 - **Page size** – 50 %…125 % (default 75 %). Remembered between launches.
 - **Clear cache**, **Reload page**, **Go to home page**, **Exit frameXTV**.
+
+## Additions, changes, fixes or suggestions welcome
