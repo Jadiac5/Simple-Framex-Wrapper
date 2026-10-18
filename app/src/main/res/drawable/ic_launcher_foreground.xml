@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Play-triangle from the frameXTV favicon, scaled to sit in the adaptive-icon safe zone. -->
+    <path
+        android:fillColor="#F2FFFFFF"
+        android:pathData="M37.68,34.28 L71.68,54 L37.68,73.72 Z" />
+    <path
+        android:fillColor="#09090B"
+        android:pathData="M49.58,41.08 L64.88,54 L49.58,66.92 Z" />
+</vector>

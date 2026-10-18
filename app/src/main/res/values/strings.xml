@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">frameXTV</string>
+    <string name="press_back_again">Press Back again to exit</string>
+    <string name="opt_reload">Reload page</string>
+    <string name="opt_home">Go to home page</string>
+    <string name="opt_page_size">Page size: %1$d%%</string>
+    <string name="opt_clear_cache">Clear cache</string>
+    <string name="opt_exit">Exit frameXTV</string>
+    <string name="cache_cleared">Cache cleared</string>
+    <string name="page_size_title">Page size</string>
+    <string name="update_title">Update available</string>
+    <string name="update_message">Version %1$s is ready (you have %2$s).</string>
+    <string name="update_button">Update</string>
+    <string name="update_skip">Go to website</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_permission">To install updates, allow this app under \"Install unknown apps\", then press Update again.</string>
+    <string name="update_permission_missing">Allow \"Install unknown apps\" for this app in the system settings, then press Update again.</string>
+    <string name="update_failed">Update failed. You can try again or go to the website.</string>
+</resources>

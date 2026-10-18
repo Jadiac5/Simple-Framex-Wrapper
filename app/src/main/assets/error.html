@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>frameXTV</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #09090b; color: #e4e4e7;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; text-align: center; }
+  main { max-width: 640px; padding: 0 32px; }
+  h1 { font-size: 34px; margin: 0 0 10px; font-weight: 700; }
+  h1 b { color: #34d399; }
+  p { font-size: 20px; line-height: 1.5; color: #a1a1aa; margin: 0 0 28px; }
+  small { display: block; margin-top: 26px; font-size: 14px; color: #52525b; word-break: break-word; }
+  button { font: inherit; font-size: 22px; font-weight: 600; color: #09090b; background: #fff;
+    border: 0; border-radius: 12px; padding: 14px 44px; outline: none; }
+  button:focus { box-shadow: 0 0 0 4px #09090b, 0 0 0 7px #34d399; }
+</style>
+</head>
+<body>
+<main>
+  <h1>frame<b>XTV</b></h1>
+  <p id="msg">Can't reach the site right now. Check the TV's internet connection.</p>
+  <button id="retry" autofocus>Retry</button>
+  <small id="detail"></small>
+</main>
+<script>
+(function () {
+  var home = 'https://framextv.xyz/';
+  var q = new URLSearchParams(location.search);
+  var target = q.get('u') || home;
+  try {
+    if (!/(^|\.)framextv\.(xyz|tech)$/.test(new URL(target).hostname)) target = home;
+  } catch (e) { target = home; }
+
+  var detail = q.get('d');
+  if (detail) document.getElementById('detail').textContent = detail;
+
+  function go() { location.replace(target); }
+  var btn = document.getElementById('retry');
+  btn.addEventListener('click', go);
+  btn.focus();
+
+  // Keep OK/Enter working whatever the remote reports, and retry quietly in the background.
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); go(); }
+  });
+  setInterval(function () {
+    fetch(home + 'favicon.svg', { mode: 'no-cors', cache: 'no-store' }).then(go, function () {});
+  }, 6000);
+})();
+</script>
+</body>
+</html>
