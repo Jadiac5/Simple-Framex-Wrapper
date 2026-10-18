@@ -11,8 +11,8 @@ android {
         minSdk 21
         // Kept below 35 on purpose: targetSdk 35 forces edge-to-edge insets on the activity.
         targetSdk 34
-        versionCode 8
-        versionName '1.1.6'
+        versionCode 9
+        versionName '1.1.7'
     }
 
     // Official releases are signed with a private key supplied through keystore.properties

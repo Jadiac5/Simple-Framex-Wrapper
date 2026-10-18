@@ -887,27 +887,9 @@
         try { document.dispatchEvent(new Event(n, { bubbles: true })); } catch (e) {}
       });
     }
-    // On a TV the video is a hardware layer that can keep the spot the frame had on the page (hence "shifted up by
-    // however far down the player sat"). Bring the frame to the very top first so that spot is the screen's origin,
-    // and prod the video into a fresh layout once fullscreen has settled.
-    function nudge() {
-      var v = document.querySelector('video');
-      if (!v) return;
-      var t = v.style.transform;
-      v.style.transform = 'translate3d(0,0,0) scale(1.0001)';
-      requestAnimationFrame(function () { requestAnimationFrame(function () { v.style.transform = t; }); });
-    }
     function request() {
       var el = this;
-      try {
-        var top = host.getBoundingClientRect().top;
-        if (top) window.parent.scrollBy(0, top);
-      } catch (e) {}
-      return host.requestFullscreen().then(function () {
-        shown = el;
-        fire();
-        [0, 150, 500, 1200].forEach(function (ms) { setTimeout(nudge, ms); });
-      });
+      return host.requestFullscreen().then(function () { shown = el; fire(); });
     }
     Element.prototype.requestFullscreen = request;
     Element.prototype.webkitRequestFullscreen = request;
@@ -962,14 +944,9 @@
   // hanging below the bar or the page's own scroll position can still push the whole picture up and leave a black
   // band at the bottom. Whatever holds the player (not the lists inside it) is put back to zero.
   var unshifting = false;
-  // A fullscreen player frame was already scrolled to the screen's origin on purpose; moving the page now would undo it.
-  function isFrameFs() {
-    var f = document.fullscreenElement || document.webkitFullscreenElement;
-    return !!f && f.tagName === 'IFRAME';
-  }
   function unshift() {
     if (unshifting) return;
-    if (IS_TOP && (window.pageYOffset || window.pageXOffset) && (document.fullscreenElement || document.webkitFullscreenElement) && !isFrameFs()) {
+    if (IS_TOP && (window.pageYOffset || window.pageXOffset) && (document.fullscreenElement || document.webkitFullscreenElement)) {
       unshifting = true;
       try { window.scrollTo(0, 0); } catch (e) {}
       unshifting = false;
@@ -995,7 +972,7 @@
     var fe = document.fullscreenElement || document.webkitFullscreenElement;
     if (fe) {
       if (!savedScroll) savedScroll = [window.pageXOffset, window.pageYOffset];
-      if ((window.pageXOffset || window.pageYOffset) && !isFrameFs()) { try { window.scrollTo(0, 0); } catch (e) {} noteScroll(document); }
+      if ((window.pageXOffset || window.pageYOffset)) { try { window.scrollTo(0, 0); } catch (e) {} noteScroll(document); }
     } else if (savedScroll) {
       var s = savedScroll;
       savedScroll = null;
