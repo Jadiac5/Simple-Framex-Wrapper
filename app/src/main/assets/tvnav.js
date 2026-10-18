@@ -873,59 +873,75 @@
     if (e.isTrusted && e.target && isTextLike(e.target)) editEl = e.target;   // a tap / mouse click is a deliberate "type here"
   }, true);
 
-  // WebView lays out fullscreen of an element *inside* an iframe relative to the iframe's place in the page, so the
-  // picture sits too high by however far down the player is on that page (varies per title). Fullscreen the iframe
-  // element in the top page instead and make the frame believe its own element went fullscreen.
+  // The TV mangles the position of a natively fullscreen video (hardware layer, stale geometry). So the player never
+  // uses native fullscreen: the iframe holding it is simply stretched over the whole window in the top page, where the
+  // site's own centred, contained video layout does the rest. The frame is told its element "is fullscreen".
   if (!IS_TOP) (function () {
-    var host = null, shown = null;
-    try { host = window.frameElement; if (!host || !host.requestFullscreen) return; } catch (e) { return; }
+    var host = null, shown = null, saved = null;
+    try { host = window.frameElement; if (!host) return; } catch (e) { return; }
     var pdoc = host.ownerDocument;
-    function hostFs() { return pdoc.fullscreenElement === host || pdoc.webkitFullscreenElement === host; }
     function define(obj, name, getter) { try { Object.defineProperty(obj, name, { configurable: true, get: getter }); } catch (e) {} }
     function fire() {
       ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (n) {
         try { document.dispatchEvent(new Event(n, { bubbles: true })); } catch (e) {}
+        try { pdoc.dispatchEvent(new Event(n, { bubbles: true })); } catch (e) {}
       });
     }
-    // The TV's video layer keeps the geometry it had before the frame went (or left) fullscreen - too high, or small in
-    // the corner - until the video is laid out afresh. Hiding it for a moment once the new layout has settled makes the
-    // layer pick up the real position; playback is not interrupted.
-    function kick() {
-      var vs = document.getElementsByTagName('video');
-      for (var i = 0; i < vs.length; i++) {
-        (function (v) {
-          var d = v.style.getPropertyValue('display'), pr = v.style.getPropertyPriority('display');
-          v.style.setProperty('display', 'none', 'important');
-          void v.offsetWidth;
-          requestAnimationFrame(function () {
-            if (d) v.style.setProperty('display', d, pr); else v.style.removeProperty('display');
-          });
-        })(vs[i]);
-      }
-    }
-    function kickSoon() { [100, 400, 900, 1800].forEach(function (ms) { setTimeout(kick, ms); }); }
     function request() {
       var el = this;
-      return host.requestFullscreen().then(function () { shown = el; fire(); kickSoon(); });
+      if (!shown) {
+        saved = host.getAttribute('style');
+        host.setAttribute('data-fxtv-fs', '1');
+        host.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;' +
+          'width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;' +
+          'padding:0!important;border:0!important;transform:none!important;z-index:2147483647!important;background:#000!important;';
+      }
+      shown = el;
+      setTimeout(fire, 0);
+      return Promise.resolve();
     }
     Element.prototype.requestFullscreen = request;
     Element.prototype.webkitRequestFullscreen = request;
     Element.prototype.webkitRequestFullScreen = request;
     function exit() {
-      if (!hostFs()) return Promise.resolve();
-      return pdoc.exitFullscreen();
+      if (!shown) return Promise.resolve();
+      shown = null;
+      host.removeAttribute('data-fxtv-fs');
+      if (saved === null) host.removeAttribute('style'); else host.setAttribute('style', saved);
+      setTimeout(fire, 0);
+      return Promise.resolve();
     }
     Document.prototype.exitFullscreen = exit;
     Document.prototype.webkitExitFullscreen = exit;
     Document.prototype.webkitCancelFullScreen = exit;
-    function current() { return shown && hostFs() ? shown : null; }
+    function current() { return shown; }
     define(Document.prototype, 'fullscreenElement', current);
     define(Document.prototype, 'webkitFullscreenElement', current);
     define(Document.prototype, 'webkitCurrentFullScreenElement', current);
-    define(Document.prototype, 'fullscreen', function () { return !!current(); });
-    define(Document.prototype, 'webkitIsFullScreen', function () { return !!current(); });
-    pdoc.addEventListener('fullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } kickSoon(); });
-    pdoc.addEventListener('webkitfullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } kickSoon(); });
+    define(Document.prototype, 'fullscreen', function () { return !!shown; });
+    define(Document.prototype, 'webkitIsFullScreen', function () { return !!shown; });
+    define(Document.prototype, 'fullscreenEnabled', function () { return true; });
+    define(Document.prototype, 'webkitFullscreenEnabled', function () { return true; });
+  })();
+
+  // Top page: the player frame stretched over the window (see below) counts as the fullscreen element here too.
+  if (IS_TOP) (function () {
+    var proto = Document.prototype;
+    function nativeGet(name) { var d = Object.getOwnPropertyDescriptor(proto, name); return d && d.get; }
+    function fsFrame() { return document.querySelector('iframe[data-fxtv-fs]'); }
+    ['fullscreenElement', 'webkitFullscreenElement', 'webkitCurrentFullScreenElement'].forEach(function (n) {
+      var g = nativeGet(n);
+      try { Object.defineProperty(proto, n, { configurable: true, get: function () { return (g && g.call(this)) || fsFrame(); } }); } catch (e) {}
+    });
+    var exit = proto.exitFullscreen || proto.webkitExitFullscreen;
+    function leave() {
+      var f = fsFrame();
+      if (f) { try { return frameWin(f).document.exitFullscreen(); } catch (e) {} }
+      return exit ? exit.call(this) : Promise.resolve();
+    }
+    proto.exitFullscreen = leave;
+    proto.webkitExitFullscreen = leave;
+    proto.webkitCancelFullScreen = leave;
   })();
 
   // A player that fills the screen must never scroll: it has nothing to scroll to, but a focus move, a hidden menu
