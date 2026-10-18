@@ -75,7 +75,8 @@ public class MainActivity extends Activity {
     private static final String[] SITE_DOMAINS = {"framextv.xyz", "framextv.tech"};
     private static final String PREFS = "frameXTV";
     private static final String PREF_ZOOM = "zoom";
-    private static final float[] ZOOM_LEVELS = {0.75f, 0.9f, 1f, 1.1f, 1.25f, 1.5f};
+    private static final float DEFAULT_ZOOM = 0.75f;
+    private static final float[] ZOOM_LEVELS = {0.5f, 0.6f, 0.75f, 0.9f, 1f, 1.25f};
     private static final long DOUBLE_BACK_MS = 2000;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -91,7 +92,7 @@ public class MainActivity extends Activity {
     private androidx.webkit.ScriptHandler documentStartHandler;
     private boolean useDocumentStart;
     private String navScript = "";
-    private float zoom = 1f;
+    private float zoom = DEFAULT_ZOOM;
     private boolean debuggable;
     private long lastBackAt;
 
@@ -114,7 +115,7 @@ public class MainActivity extends Activity {
 
         debuggable = (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         if (debuggable) WebView.setWebContentsDebuggingEnabled(true);
-        zoom = getSharedPreferences(PREFS, MODE_PRIVATE).getFloat(PREF_ZOOM, 1f);
+        zoom = getSharedPreferences(PREFS, MODE_PRIVATE).getFloat(PREF_ZOOM, DEFAULT_ZOOM);
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -768,7 +769,7 @@ public class MainActivity extends Activity {
         CharSequence[] labels = new CharSequence[ZOOM_LEVELS.length];
         int checked = 0;
         for (int i = 0; i < ZOOM_LEVELS.length; i++) {
-            labels[i] = Math.round(ZOOM_LEVELS[i] * 100) + "%" + (ZOOM_LEVELS[i] == 1f ? "  (default)" : "");
+            labels[i] = Math.round(ZOOM_LEVELS[i] * 100) + "%" + (ZOOM_LEVELS[i] == DEFAULT_ZOOM ? "  (default)" : "");
             if (Math.abs(ZOOM_LEVELS[i] - zoom) < 0.01f) checked = i;
         }
         optionsDialog = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
