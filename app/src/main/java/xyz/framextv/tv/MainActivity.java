@@ -152,9 +152,13 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new SiteChromeClient());
 
         if (savedInstanceState != null) {
-            siteStarted = true;
-            webView.restoreState(savedInstanceState);
-            webView.requestFocus();
+            // Recreated (e.g. renderer crash). If we were still in the startup check there is no page to restore.
+            if (webView.restoreState(savedInstanceState) != null) {
+                siteStarted = true;
+                webView.requestFocus();
+            } else {
+                startSite();
+            }
         } else {
             checkForUpdateThenStart();
         }
@@ -169,6 +173,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             final Updater.Release r = Updater.checkForUpdate(this, currentVersion());
             handler.post(() -> {
+                if (isDestroyed()) return;
                 if (r != null && !siteStarted && !isFinishing()) {
                     showUpdateScreen(r);
                 } else {

@@ -873,6 +873,44 @@
     if (e.isTrusted && e.target && isTextLike(e.target)) editEl = e.target;   // a tap / mouse click is a deliberate "type here"
   }, true);
 
+  // WebView lays out fullscreen of an element *inside* an iframe relative to the iframe's place in the page, so the
+  // picture sits too high by however far down the player is on that page (varies per title). Fullscreen the iframe
+  // element in the top page instead and make the frame believe its own element went fullscreen.
+  if (!IS_TOP) (function () {
+    var host = null, shown = null;
+    try { host = window.frameElement; if (!host || !host.requestFullscreen) return; } catch (e) { return; }
+    var pdoc = host.ownerDocument;
+    function hostFs() { return pdoc.fullscreenElement === host || pdoc.webkitFullscreenElement === host; }
+    function define(obj, name, getter) { try { Object.defineProperty(obj, name, { configurable: true, get: getter }); } catch (e) {} }
+    function fire() {
+      ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (n) {
+        try { document.dispatchEvent(new Event(n, { bubbles: true })); } catch (e) {}
+      });
+    }
+    function request() {
+      var el = this;
+      return host.requestFullscreen().then(function () { shown = el; fire(); });
+    }
+    Element.prototype.requestFullscreen = request;
+    Element.prototype.webkitRequestFullscreen = request;
+    Element.prototype.webkitRequestFullScreen = request;
+    function exit() {
+      if (!hostFs()) return Promise.resolve();
+      return pdoc.exitFullscreen();
+    }
+    Document.prototype.exitFullscreen = exit;
+    Document.prototype.webkitExitFullscreen = exit;
+    Document.prototype.webkitCancelFullScreen = exit;
+    function current() { return shown && hostFs() ? shown : null; }
+    define(Document.prototype, 'fullscreenElement', current);
+    define(Document.prototype, 'webkitFullscreenElement', current);
+    define(Document.prototype, 'webkitCurrentFullScreenElement', current);
+    define(Document.prototype, 'fullscreen', function () { return !!current(); });
+    define(Document.prototype, 'webkitIsFullScreen', function () { return !!current(); });
+    pdoc.addEventListener('fullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } });
+    pdoc.addEventListener('webkitfullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } });
+  })();
+
   // A player that fills the screen must never scroll: it has nothing to scroll to, but a focus move, a hidden menu
   // hanging below the bar or the page's own scroll position can still push the whole picture up and leave a black
   // band at the bottom. Whatever holds the player (not the lists inside it) is put back to zero.
