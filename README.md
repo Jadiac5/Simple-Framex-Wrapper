@@ -19,22 +19,6 @@ offline, it opens the site directly. *Update* downloads the APK inside the app a
 The first time, Android asks you to allow "Install unknown apps" for this app. Updates only install over
 official releases (same signing key); builds you compile yourself use your debug key and can't update them.
 
-## Install on the TV
-
-The TV needs "unknown sources" / "install unknown apps" enabled for whichever tool you use.
-
-**With adb** (TV and PC on the same network, developer options + network debugging on):
-
-```bash
-adb connect <tv-ip>:5555
-adb install -r Simple-Framex-Wrapper.apk
-```
-
-**Without a PC:** put the APK on a USB stick, or open the release page in the *Downloader* app on the TV.
-
-The app shows up in the TV launcher as **frameXTV** (it has a banner for the Android TV home screen).
-
-
 ## Remote controls
 
 | Key | What it does |
