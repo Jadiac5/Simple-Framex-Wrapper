@@ -887,9 +887,26 @@
         try { document.dispatchEvent(new Event(n, { bubbles: true })); } catch (e) {}
       });
     }
+    // The TV's video layer keeps the geometry it had before the frame went (or left) fullscreen - too high, or small in
+    // the corner - until the video is laid out afresh. Hiding it for a moment once the new layout has settled makes the
+    // layer pick up the real position; playback is not interrupted.
+    function kick() {
+      var vs = document.getElementsByTagName('video');
+      for (var i = 0; i < vs.length; i++) {
+        (function (v) {
+          var d = v.style.getPropertyValue('display'), pr = v.style.getPropertyPriority('display');
+          v.style.setProperty('display', 'none', 'important');
+          void v.offsetWidth;
+          requestAnimationFrame(function () {
+            if (d) v.style.setProperty('display', d, pr); else v.style.removeProperty('display');
+          });
+        })(vs[i]);
+      }
+    }
+    function kickSoon() { [100, 400, 900, 1800].forEach(function (ms) { setTimeout(kick, ms); }); }
     function request() {
       var el = this;
-      return host.requestFullscreen().then(function () { shown = el; fire(); });
+      return host.requestFullscreen().then(function () { shown = el; fire(); kickSoon(); });
     }
     Element.prototype.requestFullscreen = request;
     Element.prototype.webkitRequestFullscreen = request;
@@ -907,37 +924,8 @@
     define(Document.prototype, 'webkitCurrentFullScreenElement', current);
     define(Document.prototype, 'fullscreen', function () { return !!current(); });
     define(Document.prototype, 'webkitIsFullScreen', function () { return !!current(); });
-    pdoc.addEventListener('fullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } });
-    pdoc.addEventListener('webkitfullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } });
-  })();
-
-  // TV video layers ignore object-fit/object-position and pin a letterboxed picture to the top of the element
-  // (bars only at the bottom, by an amount that depends on the video's aspect ratio). Size the element to the
-  // picture itself instead: its flex parent then centres it, so the bars end up top and bottom.
-  if (!IS_TOP) (function () {
-    function fit(v) {
-      var box = v.parentElement;
-      if (!box || !v.videoWidth || !v.videoHeight) return;
-      var cw = box.clientWidth, ch = box.clientHeight;
-      if (!cw || !ch) return;
-      var ar = v.videoWidth / v.videoHeight, w, h;
-      if (ar > cw / ch) { w = cw; h = cw / ar; } else { h = ch; w = ch * ar; }
-      w = Math.round(w); h = Math.round(h);
-      var st = v.style;
-      if (st.getPropertyValue('width') !== w + 'px') st.setProperty('width', w + 'px', 'important');
-      if (st.getPropertyValue('height') !== h + 'px') st.setProperty('height', h + 'px', 'important');
-      if (st.getPropertyValue('object-fit') !== 'fill') st.setProperty('object-fit', 'fill', 'important');
-    }
-    function all() {
-      var vs = document.getElementsByTagName('video');
-      for (var i = 0; i < vs.length; i++) fit(vs[i]);
-    }
-    ['loadedmetadata', 'resize', 'playing', 'emptied'].forEach(function (n) {
-      document.addEventListener(n, function (e) { if (e.target && e.target.tagName === 'VIDEO') fit(e.target); }, true);
-    });
-    window.addEventListener('resize', all);
-    document.addEventListener('fullscreenchange', function () { all(); setTimeout(all, 200); });
-    setInterval(all, 1000);   // the player re-lays itself out on its own (controls, server switch, fullscreen)
+    pdoc.addEventListener('fullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } kickSoon(); });
+    pdoc.addEventListener('webkitfullscreenchange', function () { if (!hostFs() && shown) { shown = null; fire(); } kickSoon(); });
   })();
 
   // A player that fills the screen must never scroll: it has nothing to scroll to, but a focus move, a hidden menu
