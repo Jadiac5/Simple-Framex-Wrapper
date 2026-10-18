@@ -34,7 +34,7 @@ final class Updater {
     static final String REPO = "Jadiac5/Simple-Framex-Wrapper";
     private static final String API_URL = "https://api.github.com/repos/" + REPO + "/releases/latest";
     private static final String DOWNLOAD_PREFIX = "https://github.com/" + REPO + "/releases/download/";
-    private static final int TIMEOUT_MS = 3000;
+    private static final int TIMEOUT_MS = 7000;
     private static final String UPDATE_DIR = "updates";
 
     static final class Release {
@@ -87,6 +87,27 @@ final class Updater {
             if (c != null) c.disconnect();
         }
         return null;
+    }
+
+    private static final String PREFS = "updater";
+
+    /** Remembers the outcome of a check (null = up to date) so a slow check still pays off on the next launch. */
+    static void remember(Context ctx, Release r) {
+        android.content.SharedPreferences.Editor e = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+        if (r == null) {
+            e.clear();
+        } else {
+            e.putString("version", r.version).putString("url", r.apkUrl).putLong("size", r.size);
+        }
+        e.apply();
+    }
+
+    /** A remembered release that is still newer than {@code currentVersion}, else null. */
+    static Release cached(Context ctx, String currentVersion) {
+        android.content.SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String v = p.getString("version", null), url = p.getString("url", null);
+        if (v == null || url == null || !url.startsWith(DOWNLOAD_PREFIX) || !isNewer(v, currentVersion)) return null;
+        return new Release(v, url, p.getLong("size", -1));
     }
 
     /** Downloads the release APK into the app cache and checks it really is a newer build of this app. */

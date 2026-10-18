@@ -95,7 +95,7 @@ public class MainActivity extends Activity {
     private boolean debuggable;
     private long lastBackAt;
 
-    private static final long UPDATE_CHECK_MAX_MS = 4000;
+    private static final long UPDATE_CHECK_MAX_MS = 8000;
     private boolean siteStarted;
     private View updateView;
     private Button updateButton;
@@ -169,9 +169,17 @@ public class MainActivity extends Activity {
     /** Loads the site, unless a newer GitHub release exists: then the update screen comes first. */
     private void checkForUpdateThenStart() {
         // Never hold the user up for long: if GitHub is slow the site just opens.
+        // A release found by an earlier (maybe too slow for its launch) check is offered at once.
+        final Updater.Release known = Updater.cached(this, currentVersion());
+        if (known != null) {
+            showUpdateScreen(known);
+            new Thread(() -> Updater.remember(this, Updater.checkForUpdate(this, currentVersion())), "update-refresh").start();
+            return;
+        }
         handler.postDelayed(this::startSite, UPDATE_CHECK_MAX_MS);
         new Thread(() -> {
             final Updater.Release r = Updater.checkForUpdate(this, currentVersion());
+            Updater.remember(this, r);
             handler.post(() -> {
                 if (isDestroyed()) return;
                 if (r != null && !siteStarted && !isFinishing()) {
