@@ -518,7 +518,9 @@ public class MainActivity extends Activity {
                 // WebView.requestFocus() outside touch mode also moves the page's DOM focus to its first node, which
                 // would pull the cursor out of the very field the keyboard is for.
                 if (!webView.hasFocus()) webView.requestFocus();
-                imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                // Explicit (0), not SHOW_IMPLICIT: TV keyboards ignore implicit requests when they run fullscreen
+                // or the remote counts as a hardware keyboard - and this one always comes from an OK press or a tap.
+                imm.showSoftInput(webView, 0);
             }
         }, 80);
     }
