@@ -27,11 +27,11 @@
 </main>
 <script>
 (function () {
-  var home = 'https://framextv.xyz/';
+  var home = 'https://framextv.cc/';
   var q = new URLSearchParams(location.search);
   var target = q.get('u') || home;
   try {
-    if (!/(^|\.)framextv\.(xyz|tech)$/.test(new URL(target).hostname)) target = home;
+    if (!/(^|\.)framextv\.(cc|xyz|tech)$/.test(new URL(target).hostname)) target = home;
   } catch (e) { target = home; }
 
   var detail = q.get('d');

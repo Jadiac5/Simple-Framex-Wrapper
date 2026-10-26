@@ -1,5 +1,5 @@
 /*
- * frameXTV - remote-control (D-pad) navigation for framextv.xyz.
+ * frameXTV - remote-control (D-pad) navigation for framextv.cc.
  *
  * Injected by MainActivity at document start into every framextv page / iframe. The site itself has
  * no keyboard navigation, so this script adds spatial navigation on top of it:

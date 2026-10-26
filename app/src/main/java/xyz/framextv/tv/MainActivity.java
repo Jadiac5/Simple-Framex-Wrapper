@@ -60,7 +60,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Thin Android TV shell around https://framextv.xyz.
+ * Thin Android TV shell around https://framextv.cc.
  *
  * The site has no remote-control support of its own, so the real work happens in
  * assets/tvnav.js, which is injected into every page and drives focus with the D-pad.
@@ -70,9 +70,9 @@ import java.util.Set;
 public class MainActivity extends Activity {
 
     private static final String TAG = "frameXTV";
-    private static final String HOME_URL = "https://framextv.xyz/";
+    private static final String HOME_URL = "https://framextv.cc/";
     private static final String ERROR_URL = "file:///android_asset/error.html";
-    private static final String[] SITE_DOMAINS = {"framextv.xyz", "framextv.tech"};
+    private static final String[] SITE_DOMAINS = {"framextv.cc", "framextv.xyz", "framextv.tech"};
     private static final String PREFS = "frameXTV";
     private static final String PREF_ZOOM = "zoom";
     private static final float DEFAULT_ZOOM = 0.75f;
