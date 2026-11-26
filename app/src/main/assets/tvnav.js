@@ -877,7 +877,10 @@
   // uses native fullscreen: the iframe holding it is simply stretched over the whole window in the top page, where the
   // site's own centred, contained video layout does the rest. The frame is told its element "is fullscreen".
   if (!IS_TOP) (function () {
-    var host = null, shown = null, saved = null;
+    var host = null, shown = null, saved = null, ancestors = [];
+    var ANCESTOR_FIX = [['transform', 'none'], ['filter', 'none'], ['backdrop-filter', 'none'], ['-webkit-backdrop-filter', 'none'],
+      ['perspective', 'none'], ['contain', 'none'], ['content-visibility', 'visible'], ['will-change', 'auto'],
+      ['z-index', '2147483647']];
     try { host = window.frameElement; if (!host) return; } catch (e) { return; }
     var pdoc = host.ownerDocument;
     function define(obj, name, getter) { try { Object.defineProperty(obj, name, { configurable: true, get: getter }); } catch (e) {} }
@@ -895,6 +898,13 @@
         host.style.cssText = 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;' +
           'width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;' +
           'padding:0!important;border:0!important;transform:none!important;z-index:2147483647!important;background:#000!important;';
+        // A transformed / filtered / contained ancestor pins a fixed element inside itself, and a low z-index one keeps
+        // it under the header: the frame then sits behind the page (sound, no picture, no input). Neutralise them.
+        ancestors = [];
+        for (var n = host.parentElement; n && n !== pdoc.documentElement; n = n.parentElement) {
+          ancestors.push([n, n.getAttribute('style')]);
+          ANCESTOR_FIX.forEach(function (p) { n.style.setProperty(p[0], p[1], 'important'); });
+        }
       }
       shown = el;
       setTimeout(fire, 0);
@@ -908,6 +918,8 @@
       shown = null;
       host.removeAttribute('data-fxtv-fs');
       if (saved === null) host.removeAttribute('style'); else host.setAttribute('style', saved);
+      ancestors.forEach(function (a) { if (a[1] === null) a[0].removeAttribute('style'); else a[0].setAttribute('style', a[1]); });
+      ancestors = [];
       setTimeout(fire, 0);
       return Promise.resolve();
     }
