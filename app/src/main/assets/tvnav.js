@@ -67,8 +67,10 @@
     '*,*::before,*::after{transition-duration:0s!important;transition-delay:0s!important}' +
     // The sticky header blurs whatever scrolls under it (it is 95% opaque anyway); on a TV GPU that costs every scroll frame.
     '*,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
-    // Fire TV draws the video black when its frame sits in a box clipped to rounded corners.
-    ':has(> iframe[src*="/embed/"]){border-radius:0!important}';
+    // Fire TV draws the video black when its frame sits in a box clipped to rounded corners (player, trailer).
+    ':has(iframe){border-radius:0!important}' +
+    // The page's entrance animation leaves a transform that anchors "fixed" popups (the trailer) to the page, not the screen.
+    '[class*="fx-page"]{animation:none!important}';
 
   function addStyle() {
     try {
@@ -1009,6 +1011,9 @@
       savedScroll = null;
       try { window.scrollTo(s[0], s[1]); } catch (e) {}
       invalidate('fullscreen');
+      // Keys would otherwise stay with the now-small player frame: no ring, the D-pad dead. Hand them back to the page.
+      var fr = enteredFrame || focusedFrame();
+      if (fr) { leaveFrame(); setFocus(fr, true); }
     }
   }
   if (IS_TOP) {

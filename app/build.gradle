@@ -11,8 +11,8 @@ android {
         minSdk 21
         // Kept below 35 on purpose: targetSdk 35 forces edge-to-edge insets on the activity.
         targetSdk 34
-        versionCode 16
-        versionName '1.1.14'
+        versionCode 17
+        versionName '1.1.15'
     }
 
     // Official releases are signed with a private key supplied through keystore.properties
@@ -36,6 +36,10 @@ android {
     }
 
     buildTypes {
+        // Installs beside an official build, so testing doesn't wipe it (different signature, same id otherwise).
+        debug {
+            applicationIdSuffix '.debug'
+        }
         release {
             minifyEnabled false
             signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
