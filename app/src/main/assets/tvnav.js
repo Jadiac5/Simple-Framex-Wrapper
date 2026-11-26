@@ -66,7 +66,9 @@
     // Zero duration (not "none") so scripts that wait on a transition's computed duration don't hang.
     '*,*::before,*::after{transition-duration:0s!important;transition-delay:0s!important}' +
     // The sticky header blurs whatever scrolls under it (it is 95% opaque anyway); on a TV GPU that costs every scroll frame.
-    '*,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}';
+    '*,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}' +
+    // Fire TV draws the video black when its frame sits in a box clipped to rounded corners.
+    ':has(> iframe[src*="/embed/"]){border-radius:0!important}';
 
   function addStyle() {
     try {
@@ -600,11 +602,21 @@
       try { w.__fxtvEnter(!!pressedOk); } catch (e) {}
       return;
     }
+    tapEl(el);
+  }
+
+  // A real touch on el's centre, so a foreign frame takes focus and starts playing / shows its controls.
+  // Sent through the top page's bridge in top-page coordinates: the app only takes taps from the main frame.
+  function tapEl(el) {
     var r = el.getBoundingClientRect();
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var x = clamp((Math.max(r.left, 0) + Math.min(r.right, vw)) / 2, 1, vw - 1);
-    var y = clamp((Math.max(r.top, 0) + Math.min(r.bottom, vh)) / 2, 1, vh - 1);
-    post({ t: 'tap', x: x / vw, y: y / vh });   // a real touch, so a foreign frame takes focus and starts playing
+    var x = (Math.max(r.left, 0) + Math.min(r.right, window.innerWidth)) / 2;
+    var y = (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2;
+    var w = window;
+    try {
+      for (; w !== w.top; w = w.parent) { var fr = w.frameElement.getBoundingClientRect(); x += fr.left; y += fr.top; }
+      var vw = w.innerWidth, vh = w.innerHeight;
+      w.FxTV.postMessage(JSON.stringify({ t: 'tap', x: clamp(x, 1, vw - 1) / vw, y: clamp(y, 1, vh - 1) / vh }));
+    } catch (e) {}
   }
 
   // The same-origin iframe that currently has focus or is fullscreen (e.g. the player after the user clicked it).
@@ -881,7 +893,9 @@
     var host = null, shown = null, saved = null, ancestors = [];
     var ANCESTOR_FIX = [['transform', 'none'], ['filter', 'none'], ['backdrop-filter', 'none'], ['-webkit-backdrop-filter', 'none'],
       ['perspective', 'none'], ['contain', 'none'], ['content-visibility', 'visible'], ['will-change', 'auto'],
-      ['z-index', '2147483647']];
+      ['translate', 'none'], ['scale', 'none'], ['rotate', 'none'], ['container-type', 'normal'],
+      // a filled transform animation (the site's fx-page entrance) traps fixed children even when transform is none
+      ['animation', 'none'], ['z-index', '2147483647']];
     try { host = window.frameElement; if (!host) return; } catch (e) { return; }
     var pdoc = host.ownerDocument;
     function define(obj, name, getter) { try { Object.defineProperty(obj, name, { configurable: true, get: getter }); } catch (e) {} }
@@ -1102,7 +1116,11 @@
   window.__fxtvEnter = function (pressedOk) {
     try { window.focus(); } catch (e) {}
     var p = fullPlayer();
-    if (!p) return;
+    if (!p) {
+      var f = document.querySelector('iframe');
+      if (pressedOk && f && !frameWin(f)) tapEl(f);   // the "Backup" server: another site's player fills this frame
+      return;
+    }
     wake(p.box);
     var fs = document.fullscreenElement || document.webkitFullscreenElement;
     if (pressedOk && !fs) synthKey('f', 'KeyF');                       // OK on the player: fullscreen (this is still inside the user's keypress)

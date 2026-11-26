@@ -1,8 +1,8 @@
-# Simple Framex Wrapper – Android TV app for framextv.xyz
+# Simple Framex Wrapper – Android TV app for framextv.cc
 
-> Unofficial, open-source and not affiliated with framextv.xyz. No content is hosted in this repo; the app just opens the public website in a WebView. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). MIT licensed.
+> Unofficial, open-source and not affiliated with framextv.cc. No content is hosted in this repo; the app just opens the public website in a WebView. Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). MIT licensed.
 
-A small Android TV app (APK) that opens **https://framextv.xyz** full screen and lets you drive it with the
+A small Android TV app (APK) that opens **https://framextv.cc** full screen and lets you drive it with the
 normal TV remote: arrow keys, OK, Back, play/pause. No mouse cursor.
 
 It is a native `WebView` wrapper (same idea as the AniLo wrapper) plus a spatial-navigation script
@@ -41,5 +41,11 @@ official releases (same signing key); builds you compile yourself use your debug
 
 - **Page size** – 50 %…125 % (default 75 %). Remembered between launches.
 - **Clear cache**, **Reload page**, **Go to home page**, **Exit frameXTV**.
+
+## Security note
+
+Some video embeds still load parts of themselves over plain HTTP, so the app allows cleartext traffic
+(`usesCleartextTraffic`) and mixed content in the WebView. That means the player can pull unencrypted
+content. Navigation is still limited to the site's own domains, and the app's script and bridge only run there.
 
 ## Additions, changes, fixes or suggestions welcome
