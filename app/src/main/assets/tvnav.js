@@ -757,6 +757,7 @@
       swallow(e);
       if (e.repeat) return true;
       if (cur && document.documentElement.contains(cur)) {
+        if (isTextLike(cur)) { startEditing(cur); return true; }   // click() alone never focuses the field or asks for the IME
         if (onTimeline || onVolume) return true;
         clickEl(cur);
       } else {
